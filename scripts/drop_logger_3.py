@@ -17,7 +17,12 @@ FILE_MAGIC = b'DL01'       # 4 bytes: file identifier + version
 HEADER_FORMAT = '>4sf'     # magic(4s), ref_pressure(f)
 HEADER_SIZE = struct.calcsize(HEADER_FORMAT)  # 8 bytes
 ROW_FORMAT = '>IiHhhh'    # time_ms(I), p_diff(i), a_mag(H), gX(h), gY(h), gZ(h)
-ROW_SIZE = struct.calcsize(ROW_FORMAT)        # 20 bytes
+ROW_SIZE = struct.calcsize(ROW_FORMAT)        # 16 bytes
+
+#acceleration correction
+a_mag_at_rest = 10.21
+accel_scale_correction = 9.80665 / a_mag_at_rest
+print('accelerometer reference', a_mag_at_rest, 'm/s/s')
 
 # Encoding:
 #   time      : uint32 milliseconds since start (max ~49 days)
@@ -74,6 +79,7 @@ def main(device_name='droplogger'):
             pressure_diff = ref_pressure-bmp.pressure #hPa
             ax, ay, az = icm.acceleration # read the accelerometer [ms^-2]
             a_mag = sqrt(ax * ax + ay * ay + az * az)
+            a_mag *= accel_scale_correction #correct for sensor bias
             gx, gy, gz = icm.gyro   # read the gyro [deg/s]
             
             #time of obs

@@ -22,7 +22,7 @@ icm.gyro_range = icm20649.GyroRange.RANGE_4000_DPS
 
 # Fall detection settings
 fall_trigger_counter = 0
-fall_trigger_counter_limit = 10
+fall_trigger_counter_limit = 5
 fall_trigger_a_threshold = 5  # m/s/s
 
 print('Waiting to start...')
