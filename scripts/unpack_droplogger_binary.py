@@ -9,8 +9,8 @@ Usage:
  
 Binary format (DL01):
     Header (8 bytes):  magic(4s) + ref_pressure(float32)
-    Rows   (20 bytes): time_ms(uint32) + p_diff_mhPa(int32) + aX(int16) + aY(int16) 
-                        + aZ(int16) + gX(int16) + gY(int16) + gZ(int16)
+    Rows   (16 bytes): time_ms(uint32) + p_diff_mhPa(int32) + a_mag(uint16)
+                        + gX(int16) + gY(int16) + gZ(int16)
 """
  
 import struct
@@ -20,7 +20,7 @@ import os
 FILE_MAGIC = b'DL01'
 HEADER_FORMAT = '>4sf'
 HEADER_SIZE = struct.calcsize(HEADER_FORMAT)  # 8 bytes
-ROW_FORMAT = '>Iihhhhhh'
+ROW_FORMAT = '>Iihhhh'
 ROW_SIZE = struct.calcsize(ROW_FORMAT)        # 20 bytes
  
  
@@ -59,23 +59,21 @@ def unpack_file(bin_path, csv_path=None):
  
     with open(csv_path, 'w') as out:
         # Write header
-        out.write("time(s),Pressure Difference(hPa),aX(ms^-2),aY(ms^-2),aZ(ms^-2),"
+        out.write("time(s),Pressure Difference(hPa),a(ms^-2),"
                   "gX(deg/s),gY(deg/s),gZ(deg/s)\n")
         # Write reference pressure on first line (matching original CSV convention)
         out.write(f"-0.001,{ref_pressure:.3f},,,,,,\n")
  
         for i in range(n_rows):
             offset = HEADER_SIZE + i * ROW_SIZE
-            time_ms, p_diff, ax, ay, az, gx, gy, gz = struct.unpack_from(ROW_FORMAT, data, offset)
+            time_ms, p_diff, a_mag, gx, gy, gz = struct.unpack_from(ROW_FORMAT, data, offset)
  
             seconds = time_ms / 1000.0
             pressure_diff = p_diff / 1000.0  # back to hPa
-            ax_f = ax / 100.0                 # back to m/s²
-            ay_f = ay / 100.0
-            az_f = az / 100.0
+            a_f = a_mag / 100.0              # back to m/s²
  
             out.write(f"{seconds:.3f},{pressure_diff:.3f},"
-                      f"{ax_f:.2f},{ay_f:.2f},{az_f:.2f},"
+                      f"{a_f:.2f},"
                       f"{gx},{gy},{gz}\n")
  
     csv_size = os.path.getsize(csv_path)

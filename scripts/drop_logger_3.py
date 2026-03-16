@@ -2,19 +2,37 @@ import os
 import time
 import utime
 from math import sqrt
+import struct
 from machine import Pin, I2C
+#accelerometer library
 import icm20649
+#pressure sensor library
 from bmpxxx import BMP581
 
+#set verbose for debugging
+verbose = False
+
+# Binary format constants
+FILE_MAGIC = b'DL01'       # 4 bytes: file identifier + version
+HEADER_FORMAT = '>4sf'     # magic(4s), ref_pressure(f)
+HEADER_SIZE = struct.calcsize(HEADER_FORMAT)  # 8 bytes
+ROW_FORMAT = '>IiHhhh'    # time_ms(I), p_diff(i), a_mag(H), gX(h), gY(h), gZ(h)
+ROW_SIZE = struct.calcsize(ROW_FORMAT)        # 20 bytes
+
+# Encoding:
+#   time      : uint32 milliseconds since start (max ~49 days)
+#   pressure  : int32  milli-hPa difference from ref (±2,147,483 hPa, covers ±2000m+)
+#   accel     : uint16 magnitude × 100 (max 655 m/s² ≈ 66g, covers ±16g)
+#   gyro  x3  : int16  deg/s as integer (±32767, covers ±4000)
+
 def count_files(path, extension):
+    #check the number of data files in a directory
     return sum(1 for f in os.listdir(path) if f.endswith(extension))
 
-def main():
-    
+def main(device_name='droplogger'):
     print('Logger software activated')
-    verbose = False
-    
-    # The BOOT button is connected to GPIO 9 on the ESP32-C3
+
+    # The BOOT button is connected to GPIO 9 on the ESP32-C3. Use to stop logging
     boot_pin = Pin(9, Pin.IN, Pin.PULL_UP)
     
     #init led
@@ -37,49 +55,67 @@ def main():
     _ = bmp.pressure
     #get a reference pressure to improve compression
     ref_pressure = bmp.pressure #hPa
+    
     # Change filename and fileformat here.
-    next_file_int = count_files('/data', '.csv') + 1
-    filename = f"data/droplogger_data_{next_file_int}.csv"
+    next_file_int = count_files('/data', '.bin') + 1
+    filename = f"data/{device_name}_{next_file_int}.bin"
 
     # Save file in path /
     print('Start logging')
     write_count = 0
     with open(filename, "a") as f:
-        #write header
-        cols = ["time(s)","Pressure Difference(hPa)","aX(ms^-2)","aY(ms^-2)","aZ(ms^-2)","gX(deg/s)","gY(deg/s)","gZ(deg/s)"]
-        f.write(",".join(cols) + "\n")
-        #write reference pressure
-        ref_data = "{:.3f},{:.3f},,,,,,\n".format(-0.001,ref_pressure)
-        f.write(ref_data)
+        # Write header
+        header = struct.pack(HEADER_FORMAT, FILE_MAGIC, ref_pressure)
+        f.write(header)
         start_time = utime.ticks_us()
         led.value(1)
         while True:
             #read new data
             pressure_diff = ref_pressure-bmp.pressure #hPa
             ax, ay, az = icm.acceleration # read the accelerometer [ms^-2]
+            a_mag = sqrt(ax * ax + ay * ay + az * az)
             gx, gy, gz = icm.gyro   # read the gyro [deg/s]
-
-            seconds = utime.ticks_diff(utime.ticks_us(), start_time)/10**6
             
-            #write data
-            row = "{:.3f},{:.3f},{:.2f},{:.2f},{:.2f},{:d},{:d},{:d}\n".format(seconds, pressure_diff, ax, ay, az, int(gx), int(gy), int(gz))
+            #time of obs
+            elapsed_ms = utime.ticks_diff(utime.ticks_us(), start_time) // 1000
+            
+            # Pack and write row
+            row = struct.pack(ROW_FORMAT,
+                elapsed_ms,
+                int(round(pressure_diff * 1000)),  # milli-hPa
+                int(round(a_mag * 100)),            # centi-m/s²
+                int(round(gx)),                     # deg/s
+                int(round(gy)),
+                int(round(gz)),
+            )
             f.write(row)
             write_count += 1
+            #write_count += 1
             if verbose:
                 print('NEW data')
-                print(row)
+                print(f"t={elapsed_ms}ms p={pressure_diff:.3f} a={a_mag:.2f} g=({gx},{gy},{gz})")
                 print('')
-            if write_count == 1000:
+            #kill loop if boot pin is pressed
+            if boot_pin.value() == 0:
+                print('aborting due to storage limits')
                 f.flush()
+                led.value(0)
+                break
+            #run checks
+            if write_count == 500:
+                #flush cache
+                f.flush()
+                #reset counter
                 write_count = 0
-                if verbose:
-                    print('flush')
-                #kill loop if boot pin is pressed
-                if boot_pin.value() == 0:
+                #check storage
+                stat = os.statvfs('/data')
+                free_bytes = stat[0] * stat[3]  # block_size * free_blocks
+                if free_bytes < 50_000:  # ~50KB safety margin
+                    print('aborting due to storage limits')
                     led.value(0)
                     break
-            #time.sleep(1) 
-                
+                else:
+                    print('storage now at', free_bytes)
     print('Finished')
 
 if __name__ == "__main__":

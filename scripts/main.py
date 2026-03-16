@@ -42,9 +42,6 @@ while True:
     # Fall detected - start logger immediately
     if fall_trigger_counter >= fall_trigger_counter_limit:
         print("Fall detected - starting logger")
-        led.value(1)
-        time.sleep(0.1)
-        led.value(0)
         import drop_logger_3
         drop_logger_3.main(logger_name)
         break
