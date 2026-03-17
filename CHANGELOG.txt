@@ -1,0 +1,6 @@
+Droplogger
+CHANGELOG.txt
+--------------------------
+
+17 March 2026
+* added config file for device name

@@ -2,9 +2,16 @@ import time
 from machine import Pin, I2C
 from math import sqrt
 import icm20649
+import drop_logger
 
 # Set the device name here! Used for wifi AP name and binary file naming.
-logger_name = 'droplogger-test'
+try:
+    with open('device_name.txt', 'r') as f:
+        device_name = f.read().strip()
+    if not device_name:
+        device_name = 'droplogger'
+except OSError:
+    device_name = 'droplogger'
 
 LONG_PRESS_MS = 2000  # Hold boot button for 2s = file server mode
 
@@ -42,8 +49,7 @@ while True:
     # Fall detected - start logger immediately
     if fall_trigger_counter >= fall_trigger_counter_limit:
         print("Fall detected - starting logger")
-        import drop_logger_3
-        drop_logger_3.main(logger_name)
+        drop_logger.main(device_name)
         break
 
     # Boot button pressed - determine short vs long press
@@ -78,7 +84,7 @@ while True:
 
             print('Starting WiFi file server...')
             import file_server
-            file_server.start_ap(ssid=logger_name, password='hailstone')
+            file_server.start_ap(ssid=device_name, password='hailstone')
             break
         else:
             # Short press - start logger
@@ -86,8 +92,7 @@ while True:
             led.value(1)
             time.sleep(0.1)
             led.value(0)
-            import drop_logger_3
-            drop_logger_3.main(logger_name)
+            drop_logger.main(device_name)
             break
 
     time.sleep(0.05)
