@@ -17,7 +17,7 @@ import struct
 import sys
 import os
  
-FILE_MAGIC = b'DL01'
+FILE_MAGIC = b'DL01' #download logger v1 format identifier
 HEADER_FORMAT = '>4sf'
 HEADER_SIZE = struct.calcsize(HEADER_FORMAT)  # 8 bytes
 ROW_FORMAT = '>Iihhhh'

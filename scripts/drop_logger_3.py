@@ -13,7 +13,7 @@ from bmpxxx import BMP581
 verbose = False
 
 # Binary format constants
-FILE_MAGIC = b'DL01'       # 4 bytes: file identifier + version
+FILE_MAGIC = b'DL01'       # download logger v1 format identifier
 HEADER_FORMAT = '>4sf'     # magic(4s), ref_pressure(f)
 HEADER_SIZE = struct.calcsize(HEADER_FORMAT)  # 8 bytes
 ROW_FORMAT = '>IiHhhh'    # time_ms(I), p_diff(i), a_mag(H), gX(h), gY(h), gZ(h)
