@@ -72,7 +72,7 @@ def main(device_name='droplogger'):
         # Write header
         header = struct.pack(HEADER_FORMAT, FILE_MAGIC, ref_pressure)
         f.write(header)
-        start_time = utime.ticks_us()
+        start_time = utime.ticks_ms()
         led.value(1)
         while True:
             #read new data
@@ -83,7 +83,7 @@ def main(device_name='droplogger'):
             gx, gy, gz = icm.gyro   # read the gyro [deg/s]
             
             #time of obs
-            elapsed_ms = utime.ticks_diff(utime.ticks_us(), start_time) // 1000
+            elapsed_ms = utime.ticks_diff(utime.ticks_ms(), start_time)
             
             # Pack and write row
             row = struct.pack(ROW_FORMAT,
