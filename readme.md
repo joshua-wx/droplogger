@@ -18,6 +18,7 @@
   - [Option 1: WiFi File Server (Recommended)](#option-1-wifi-file-server-recommended)
   - [Option 2: USB (via serial tools)](#option-2-usb-via-serial-tools)
 - [Converting Binary Files to CSV](#converting-binary-files-to-csv)
+  - [CSV File Format](#csv-file-format)
 - [Configuration](#configuration)
   - [Device Name](#device-name)
   - [Fall Detection Sensitivity](#fall-detection-sensitivity)
@@ -27,7 +28,6 @@
   - [The Logging Loop](#the-logging-loop)
   - [Key Variables You Might Want to Change](#key-variables-you-might-want-to-change)
 - [File Structure Summary](#file-structure-summary)
-
 ---
 
 ## Overview
@@ -189,6 +189,38 @@ python unpack_droplogger_binary.py /path/to/folder/
 python unpack_droplogger_binary.py /path/to/folder/ --replace
 ```
 
+### CSV File Format
+ 
+Each output CSV contains a header row, a reference row, and then continuous data rows.
+ 
+**Header:**
+ 
+```
+time(s),Pressure Difference(hPa),a(ms^-2),gX(deg/s),gY(deg/s),gZ(deg/s)
+```
+ 
+**Reference row:** The first data row has time set to `-0.001` and the second column contains the **absolute reference pressure** in hPa recorded at startup. The remaining columns are empty. This allows you to reconstruct absolute pressure from the differential values in subsequent rows: `absolute_pressure = ref_pressure − pressure_difference`.
+ 
+**Data columns:**
+ 
+| Column | Unit | Description |
+|--------|------|-------------|
+| `time(s)` | seconds | Elapsed time since logging started (millisecond resolution) |
+| `Pressure Difference(hPa)` | hPa | `ref_pressure − current_pressure`. Positive values mean pressure has decreased (altitude increased). |
+| `a(ms^-2)` | m/s² | Acceleration magnitude (`√(aX² + aY² + aZ²)`), with scale correction applied |
+| `gX(deg/s)` | °/s | Rotation rate around X axis (integer) |
+| `gY(deg/s)` | °/s | Rotation rate around Y axis (integer) |
+| `gZ(deg/s)` | °/s | Rotation rate around Z axis (integer) |
+ 
+**Example:**
+ 
+```
+time(s),Pressure Difference(hPa),a(ms^-2),gX(deg/s),gY(deg/s),gZ(deg/s)
+-0.001,1008.234,,,,
+0.003,0.012,9.81,0,-1,2
+0.006,0.025,9.78,1,0,1
+0.009,0.041,9.83,-1,2,0
+```
 ---
 
 ## Configuration
