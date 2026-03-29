@@ -37,15 +37,15 @@ def count_files(path, extension):
 def main(device_name='droplogger'):
     print('Logger software activated')
 
-    # The BOOT button is connected to GPIO 9 on the ESP32-C3. Use to stop logging
-    boot_pin = Pin(9, Pin.IN, Pin.PULL_UP)
+    # The BOOT button is connected to GPIO 0 on the ESP32-S3. Use to stop logging
+    boot_pin = Pin(0, Pin.IN, Pin.PULL_UP)
     
     #init led
     led = Pin(2, Pin.OUT)
     led.value(0)  # Turn the LED OFF
 
     #Accelometer (ICM20649)
-    i2c = I2C(scl=Pin(7), sda=Pin(6))
+    i2c = I2C(scl=Pin(6), sda=Pin(5))
     icm = icm20649.ICM20649(i2c, address=0x68)
     icm.gyro_range = icm20649.GyroRange.RANGE_4000_DPS #set gyro range to 4000 deg/s
     

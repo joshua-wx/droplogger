@@ -19,11 +19,11 @@ LONG_PRESS_MS = 2000  # Hold boot button for 2s = file server mode
 led = Pin(2, Pin.OUT)
 led.value(0)
 
-# The BOOT button is connected to GPIO 9 on the ESP32-C3
-boot_pin = Pin(9, Pin.IN, Pin.PULL_UP)
+# The BOOT button is connected to GPIO 0 on the ESP32-C3
+boot_pin = Pin(0, Pin.IN, Pin.PULL_UP)
 
 # Accelerometer (ICM20649)
-i2c = I2C(scl=Pin(7), sda=Pin(6))
+i2c = I2C(scl=Pin(6), sda=Pin(5))
 icm = icm20649.ICM20649(i2c, address=0x68)
 icm.gyro_range = icm20649.GyroRange.RANGE_4000_DPS
 

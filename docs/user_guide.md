@@ -1,26 +1,28 @@
 # Drop Logger — User Guide
 
+![logo](droplogger_logo.png)
+
 ## Overview
 
-The Drop Logger is an ESP32-C3-based data logger designed to record barometric pressure, acceleration, and gyroscope data at high frequency. It uses two sensors over I2C:
+The Drop Logger is an ESP32-S3-based data logger designed to record barometric pressure, acceleration, and gyroscope data at high frequency. It uses two sensors over I2C:
 
 - **BMP581** — barometric pressure sensor (records pressure difference from a reference taken at startup)
 - **ICM20649** — 6-axis accelerometer and gyroscope (records 3-axis acceleration in m/s² and 3-axis rotation in °/s)
 
 The device is designed to be mounted inside a 3D-printed hailstone and dropped from a drone at heights of 100–250 m. The recorded data allows characterisation of tumbling motions and fall dynamics of non-spherical hailstones.
 
-The device is controlled entirely with the **BOOT button** (GPIO 9) and provides feedback through an **onboard LED** (GPIO 2).
+The device is controlled entirely with the **BOOT button** (GPIO 0) and provides feedback through an **onboard LED** (GPIO 2).
 
 ---
 
 ## Hardware Connections
 
-| Component | ESP32-C3 Pin |
+| Component | ESP32-S3 Pin |
 |-----------|-------------|
-| I2C SCL | GPIO 7 |
-| I2C SDA | GPIO 6 |
+| I2C SCL | GPIO 6|
+| I2C SDA | GPIO 5 |
 | LED | GPIO 2 |
-| BOOT button | GPIO 9 |
+| BOOT button | GPIO 0 |
 | BMP581 address | 0x47 |
 | ICM20649 address | 0x68 |
 
@@ -121,7 +123,7 @@ The WiFi name and password can be changed by editing `logger_name` and the passw
 
 ### Option 2: USB (via serial tools)
 
-Connect to the ESP32-C3 over USB and use one of these tools:
+Connect to the ESP32-S3 over USB and use one of these tools:
 
 - **Thonny IDE** — Connect to the board, navigate to `/data/` in the file browser, right-click a file and choose "Download to…".
 - **mpremote** — `mpremote cp :/data/droplogger_data_1.csv .`
