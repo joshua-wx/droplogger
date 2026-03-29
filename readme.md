@@ -6,6 +6,11 @@
 
 - [Overview](#overview)
 - [Hardware Connections](#hardware-connections)
+- [Sensor Specifications and Calibration](#sensor-specifications-and-calibration)
+  - [BMP581 — Barometric Pressure](#bmp581--barometric-pressure)
+  - [ICM20649 — Accelerometer and Gyroscope](#icm20649--accelerometer-and-gyroscope)
+  - [Accelerometer Calibration](#accelerometer-calibration)
+  - [Implications for Drop Experiments](#implications-for-drop-experiments)
 - [Device Modes](#device-modes)
   - [Fall Detection](#fall-detection)
   - [Button Press Detection](#button-press-detection)
@@ -56,6 +61,76 @@ The device is controlled entirely with the **BOOT button** (GPIO 0) and provides
 
 ---
 
+## Sensor Specifications and Calibration
+  
+### BMP581 — Barometric Pressure
+ 
+The BMP581 is a 24-bit absolute barometric pressure sensor from Bosch Sensortec. It provides on-chip linearization and temperature compensation.
+ 
+**Datasheet specifications:**
+ 
+| Parameter | Value |
+|-----------|-------|
+| Pressure operating range | 300–1250 hPa |
+| Absolute accuracy (typical) | ±0.3 hPa (~±2.5 m altitude) |
+| Absolute accuracy (max) | ±0.5 hPa (~±4 m altitude) |
+| Relative accuracy (900-1100hPa) | ±0.4 Pa (~±0.033 m altitude) |
+| Pressure resolution | 1/64 Pa (0.015625 Pa) |
+| RMS noise (typical) | 0.08 Pa at 1000 hPa |
+| Temperature coefficient offset | ±0.5 Pa/K (typical) |
+| Long-term drift | ±0.1 hPa over 12 months |
+| Temperature accuracy | ±0.5 °C |
+| Maximum output data rate | up to 240 Hz (OSR×1) |
+ 
+**Logger configuration:** The logger uses the fastest possible settings — OSR×1 for both pressure and temperature, with the IIR filter disabled (`COEF_0`). This maximises sample rate at the cost of higher per-sample noise. The noise specifications above are typical values; at OSR×1 with no filtering, individual samples will be noisier than the best-case figures. Higher oversampling (e.g. OSR×128) reduces noise dramatically but slows the output data rate.
+ 
+**Altitude derivation:** The logger records pressure differences rather than absolute pressure. Altitude is not computed on-device but can be derived from the pressure data using the international barometric formula. Near sea level, 1 hPa corresponds to approximately 8.3 m of altitude change, so the relative accuracy of ±0.06 hPa translates to roughly ±0.5 m in differential altitude measurements.
+ 
+### ICM20649 — Accelerometer and Gyroscope
+ 
+The ICM20649 is a wide-range 6-axis MEMS inertial measurement unit from TDK InvenSense, designed for high-impact and high-speed rotation applications. It features a 16-bit ADC for each axis.
+ 
+**Datasheet specifications:**
+ 
+| Parameter | Value |
+|-----------|-------|
+| Accelerometer full-scale ranges | ±4g, ±8g, ±16g, ±30g |
+| Accelerometer sensitivity error | ±0.5% |
+| Accelerometer noise density | 285 µg/√Hz |
+| Gyroscope full-scale ranges | ±500, ±1000, ±2000, ±4000 °/s |
+| Gyroscope sensitivity error | ±0.5% |
+| Gyroscope noise density | 0.0175 °/s/√Hz |
+| ADC resolution | 16-bit per axis |
+| Operating temperature range | −40 to +85 °C |
+ 
+**Logger configuration:** The accelerometer is set to ±8g and the gyroscope to ±4000 °/s. At the ±8g range, the raw sensitivity is 4096 LSB/g, giving a per-axis resolution of approximately 0.0024 m/s². At the ±4000 °/s gyroscope range, the sensitivity is 8.2 LSB/°/s, giving a resolution of approximately 0.12 °/s per axis. The ±8g accelerometer range is sufficient for freefall (~0g) through to aerodynamic deceleration, while the ±4000 °/s gyro range accommodates the fast tumbling expected during drop experiments.
+ 
+**Data encoding:** The logger computes the acceleration magnitude (`√(aX² + aY² + aZ²)`) and stores it as a uint16 scaled by 100 (centi-m/s²), giving a recorded resolution of 0.01 m/s² and a maximum recordable value of 655.35 m/s² (~66.8g). Gyroscope values are stored as integers in °/s (int16), so the recorded gyro resolution is 1 °/s — coarser than the raw sensor resolution but sufficient for characterising tumbling at the expected rotation rates.
+ 
+### Accelerometer Calibration
+ 
+The logger applies a simple scale correction to the acceleration magnitude to compensate for sensor bias. The correction factor is computed as:
+ 
+```
+accel_scale_correction = 9.80665 / a_mag_at_rest
+```
+ 
+where `a_mag_at_rest` is the measured acceleration magnitude when the sensor is stationary (currently set to 10.21 m/s² in accel_calibration.txt). The expected value at rest is 1g (9.80665 m/s²), so the correction factor (~0.960) scales all magnitude readings to compensate for the consistent offset. This is a first-order correction that assumes the bias is uniform across all axes and magnitudes. It does not correct for per-axis offset, cross-axis sensitivity, or nonlinearity.
+ 
+The value of `a_mag_at_rest` should be recalibrated for each individual sensor unit, as the offset varies from device to device.
+ 
+### Implications for Drop Experiments
+ 
+For typical drop experiments from 100–250 m, the key measurement considerations are:
+ 
+**Pressure/altitude:** The relative accuracy of ±0.04 Pa (~±0.033 m) is more than adequate for tracking altitude changes of 100–250 m. However, the absolute accuracy of ±0.3 hPa (~±2.5 m) means the starting altitude cannot be determined to better than a few metres from pressure alone. The OSR×1 setting with no IIR filter means individual pressure samples will be noisy, but post-processing (e.g. a moving average) can smooth this out without affecting the overall altitude profile.
+ 
+**Acceleration:** During freefall the sensor should read close to 0g (limited by aerodynamic drag on the hailstone). The ±8g range provides headroom for launch accelerations and impact events. The 0.01 m/s² recorded resolution is sufficient to distinguish freefall from rest.
+ 
+**Gyroscope:** The ±4000 °/s range covers up to ~11 full rotations per second, which is expected to be sufficient for moderate tumbling. The 1 °/s integer resolution in the recorded data is adequate for characterising tumble rates and their evolution during the fall.
+
+---
+
 ## Device Modes
 
 On power-up the device enters a waiting state and continuously monitors the accelerometer. There are three ways to proceed:
@@ -88,6 +163,10 @@ While the BOOT button is held down, the LED blinks to provide feedback. If held 
 ---
 
 ## Data Logging
+
+### Duration
+
+The total storage for data files is 5.8MB, which is approximately 24 minutes of data with the current binary encoding
 
 ### Starting a Log
 
@@ -138,7 +217,7 @@ All values are big-endian. To reconstruct absolute pressure: `absolute_pressure 
 
 There are two ways to get data off the device: over WiFi using the built-in file server, or over USB.
 
-### Option 1: WiFi File Server (Recommended)
+### Option 1: WiFi File Server (Recommended, much much faster)
 
 This is the easiest method and doesn't require any software on your computer beyond a web browser.
 Make sure the PC/laptop is within 30 cm of the logger to get a good wifi signal (The logger has no wifi antenna...) 
@@ -152,7 +231,7 @@ Make sure the PC/laptop is within 30 cm of the logger to get a good wifi signal 
 
 The device name (and therefore WiFi AP name) is read from `device_name.txt` on the ESP32's filesystem. See [Configuration](#configuration) for details.
 
-### Option 2: USB (via serial tools)
+### Option 2: USB (via serial tools, slow)
 
 Connect to the ESP32-S3 over USB and use one of these tools:
 
