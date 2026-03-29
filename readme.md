@@ -102,6 +102,7 @@ Press the **BOOT button** at any time to stop recording. The button is checked o
 3. The data file is flushed and closed.
 
 Logging will also stop automatically if free storage drops below ~50 KB.
+Frees space for storage on the S3 is approximate 5.8 MB.
 
 ### Output Files
 
@@ -140,6 +141,7 @@ There are two ways to get data off the device: over WiFi using the built-in file
 ### Option 1: WiFi File Server (Recommended)
 
 This is the easiest method and doesn't require any software on your computer beyond a web browser.
+Make sure the PC/laptop is within 30 cm of the logger to get a good wifi signal (The logger has no wifi antenna...) 
 
 1. **Power on** the device.
 2. **Long-press the BOOT button** (hold for ≥2 seconds). The LED will blink while held and then triple-blink to confirm.
