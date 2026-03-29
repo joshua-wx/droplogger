@@ -363,15 +363,6 @@ The core loop runs as fast as the I2C reads allow (no explicit delay):
 
 The BOOT button is checked on every iteration and will immediately stop recording if pressed. Every 500 rows the file buffer is flushed to flash storage and available disk space is checked.
 
-### Key Variables You Might Want to Change
-
-- **`verbose`** — Set to `True` to print each row to the serial console. Useful for debugging but significantly slows down logging.
-- **`a_mag_at_rest`** — The measured acceleration magnitude at rest, used to compute the scale correction factor. Recalibrate this for each sensor unit.
-- **Sensor oversampling** — Increase `pressure_oversample_rate` or `temperature_oversample_rate` (e.g., `OSR4`, `OSR8`) for lower noise at slower sample rates.
-- **Gyro range** — Lower the range (e.g., `RANGE_2000_DPS`, `RANGE_1000_DPS`) if you don't need ±4,000 °/s; this gives finer angular precision.
-- **Flush interval** — The `500` sample threshold before flushing. Lower values reduce data loss risk if power is cut but add I/O overhead.
-- **Data directory and naming** — Change the path or naming convention for output files in the `filename` variable.
-
 ---
 
 ## File Structure Summary
