@@ -20,7 +20,14 @@ ROW_FORMAT = '>IiHhhh'    # time_ms(I), p_diff(i), a_mag(H), gX(h), gY(h), gZ(h)
 ROW_SIZE = struct.calcsize(ROW_FORMAT)        # 16 bytes
 
 #acceleration correction
-a_mag_at_rest = 10.21
+try:
+    with open('accel_calibration.txt', 'r') as f:
+        a_mag_at_rest = float(f.read().strip())
+        print('read successful')
+    if not a_mag_at_rest:
+        a_mag_at_rest = 10.21
+except OSError:
+    a_mag_at_rest = 10.21
 accel_scale_correction = 9.80665 / a_mag_at_rest
 print('accelerometer reference', a_mag_at_rest, 'm/s/s')
 
