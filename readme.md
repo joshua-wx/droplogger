@@ -168,8 +168,6 @@ Replace the serial port (`/dev/ttyUSB0`, `COM3`, etc.) as appropriate for your s
 
 If you have `.bin` files from the logger (binary format, identified by the `DL01` magic header), you can convert them to CSV on your desktop computer using `unpack_droplogger_binary.py`. This is a standard Python script (not MicroPython) — run it on your PC.
 
-> **Note:** The unpack script currently expects the older binary format with individual aX/aY/aZ columns (20-byte rows), but the logger now writes acceleration magnitude only (16-byte rows). The unpack script needs to be updated to match — see the note below.
-
 **Basic usage:**
 
 ```bash
