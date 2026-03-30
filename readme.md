@@ -5,6 +5,7 @@
 ## Table of Contents
 
 - [Overview](#overview)
+- [Power](#power)
 - [Hardware Connections](#hardware-connections)
 - [Sensor Specifications and Calibration](#sensor-specifications-and-calibration)
   - [BMP581 — Barometric Pressure](#bmp581--barometric-pressure)
@@ -45,6 +46,15 @@ The Drop Logger is an ESP32-S3-based data logger designed to record barometric p
 The device is designed to be mounted inside a 3D-printed hailstone and dropped from a drone at heights of 100–250 m. The recorded data allows characterisation of tumbling motions and fall dynamics of non-spherical hailstones.
 
 The device is controlled entirely with the **BOOT button** (GPIO 0) and provides feedback through an **onboard LED** (GPIO 2).
+
+---
+## Power
+
+The drop logger uses a permanently connected 3.7V 180mah lithium polymer battery.
+
+To turn on the device, slide the switch towards the left side of the device (when viewing the logo from the front). The device will also be powered by usb regardless of the switch position.
+
+To charge the battery, connect via usb when the power is switched on. A small red led will start flashing during charging and turn off when charging is completed.
 
 ---
 
