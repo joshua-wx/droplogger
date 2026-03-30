@@ -6,7 +6,7 @@ import drop_logger
 
 # Set the device name here! Used for wifi AP name and binary file naming.
 try:
-    with open('device_name.txt', 'r') as f:
+    with open('config/device_name.txt', 'r') as f:
         device_name = f.read().strip()
     if not device_name:
         device_name = 'droplogger'

@@ -11,6 +11,11 @@ from bmpxxx import BMP581
 
 #set verbose for debugging
 verbose = False
+#set storage checks (but will create small delays)
+check_storage = False
+
+#default acceleration value
+default_a_mag_at_rest = 10.21
 
 # Binary format constants
 FILE_MAGIC = b'DL01'       # download logger v1 format identifier
@@ -18,18 +23,6 @@ HEADER_FORMAT = '>4sf'     # magic(4s), ref_pressure(f)
 HEADER_SIZE = struct.calcsize(HEADER_FORMAT)  # 8 bytes
 ROW_FORMAT = '>IiHhhh'    # time_ms(I), p_diff(i), a_mag(H), gX(h), gY(h), gZ(h)
 ROW_SIZE = struct.calcsize(ROW_FORMAT)        # 16 bytes
-
-#acceleration correction
-try:
-    with open('accel_calibration.txt', 'r') as f:
-        a_mag_at_rest = float(f.read().strip())
-        print('read successful')
-    if not a_mag_at_rest:
-        a_mag_at_rest = 10.21
-except OSError:
-    a_mag_at_rest = 10.21
-accel_scale_correction = 9.80665 / a_mag_at_rest
-print('accelerometer reference', a_mag_at_rest, 'm/s/s')
 
 # Encoding:
 #   time      : uint32 milliseconds since start (max ~49 days)
@@ -43,6 +36,18 @@ def count_files(path, extension):
 
 def main(device_name='droplogger'):
     print('Logger software activated')
+
+    #acceleration correction
+    try:
+        with open('config/accel_calibration.txt', 'r') as f:
+            a_mag_at_rest = float(f.read().strip())
+            print('accel_calibration read successful')
+        if not a_mag_at_rest:
+            a_mag_at_rest = default_a_mag_at_rest
+    except OSError:
+        a_mag_at_rest = default_a_mag_at_rest
+    accel_scale_correction = 9.80665 / a_mag_at_rest
+    print('accelerometer reference', a_mag_at_rest, 'm/s/s')
 
     # The BOOT button is connected to GPIO 0 on the ESP32-S3. Use to stop logging
     boot_pin = Pin(0, Pin.IN, Pin.PULL_UP)
@@ -121,14 +126,15 @@ def main(device_name='droplogger'):
                 #reset counter
                 write_count = 0
                 #check storage
-                stat = os.statvfs('/data')
-                free_bytes = stat[0] * stat[3]  # block_size * free_blocks
-                if free_bytes < 50_000:  # ~50KB safety margin
-                    print('aborting due to storage limits')
-                    led.value(0)
-                    break
-                else:
-                    print('storage now at', free_bytes)
+                if check_storage:
+                    stat = os.statvfs('/data')
+                    free_bytes = stat[0] * stat[3]  # block_size * free_blocks
+                    if free_bytes < 50_000:  # ~50KB safety margin
+                        print('aborting due to storage limits')
+                        led.value(0)
+                        break
+                    else:
+                        print('storage now at', free_bytes)
     print('Finished')
 
 if __name__ == "__main__":
