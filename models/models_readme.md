@@ -5,6 +5,7 @@ _A collection of model files are provided to help integrate the drop logger into
 These parts consist of
 - 50 mm diameter hemisphere to enclose the logger
 - 3 mm diameter pins (6mm length) to  close the hemispheres
+- Top cover for Seeed Xiao EPS32-S3 to allow easy access to buttons.
 
 With two hemispheres, the cavity for the logger is: 33 mm long, 22 mm wide and 25 mm high
 

@@ -1,6 +1,6 @@
 # Drop Logger — User Guide
 
-![logo](droplogger_logo.png)
+![logo](img/droplogger_logo.png)
 
 ## Table of Contents
 
