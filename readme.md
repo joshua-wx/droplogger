@@ -50,11 +50,11 @@ The device logging is controlled entirely with the **Mode/Boot button** (GPIO 0)
 ---
 ## Power
 
-The drop logger uses a permanently connected 3.7V 180mah lithium polymer battery.
+The drop logger uses a permanently connected 3.7V 180mah lithium polymer battery. A fully charged battery will power the logger for at least 1 hour (e.g., 2-3 full flights).
 
 To turn on the device, slide the switch towards the left side of the device (when viewing the logo from the front). The device will also be powered by usb regardless of the switch position.
 
-To charge the battery, connect via usb when the power is switched on. A small red led will start flashing during charging and turn off when charging is completed.
+To charge the battery, connect via usb when the power is switched on. A small red led will start flashing during charging and turn off when charging is completed. Charging takes approximately 1 hour to complete.
 
 ---
 
