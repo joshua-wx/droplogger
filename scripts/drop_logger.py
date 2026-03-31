@@ -1,6 +1,7 @@
 import os
 import time
 import utime
+import machine
 from math import sqrt
 import struct
 from machine import Pin, I2C
@@ -34,7 +35,7 @@ def count_files(path, extension):
     #check the number of data files in a directory
     return sum(1 for f in os.listdir(path) if f.endswith(extension))
 
-def main(device_name='droplogger'):
+def main(device_name='droplogger-test'):
     print('Logger software activated')
 
     #acceleration correction
@@ -115,9 +116,9 @@ def main(device_name='droplogger'):
                 print('')
             #kill loop if boot pin is pressed
             if boot_pin.value() == 0:
-                print('aborting due to storage limits')
+                print('stopping logging manually')
+                #flush cache
                 f.flush()
-                led.value(0)
                 break
             #run checks
             if write_count == 500:
@@ -131,12 +132,16 @@ def main(device_name='droplogger'):
                     free_bytes = stat[0] * stat[3]  # block_size * free_blocks
                     if free_bytes < 50_000:  # ~50KB safety margin
                         print('aborting due to storage limits')
-                        led.value(0)
                         break
                     else:
                         print('storage now at', free_bytes)
     print('Finished')
+    #turn off led
+    led.value(0)
 
+    #restart device
+    machine.reset()
+    
 if __name__ == "__main__":
     main()    
 #todo:
