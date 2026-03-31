@@ -14,7 +14,6 @@
   - [Implications for Drop Experiments](#implications-for-drop-experiments)
 - [Device Modes](#device-modes)
   - [Fall Detection](#fall-detection)
-  - [Button Press Detection](#button-press-detection)
 - [Data Logging](#data-logging)
   - [Starting a Log](#starting-a-log)
   - [Stopping a Log](#stopping-a-log)
@@ -29,7 +28,6 @@
   - [Device Name](#device-name)
   - [Fall Detection Sensitivity](#fall-detection-sensitivity)
 - [Code Overview — `drop_logger.py`](#code-overview--drop_loggerpy)
-  - [Imports and Helpers](#imports-and-helpers)
   - [Sensor Initialisation](#sensor-initialisation)
   - [The Logging Loop](#the-logging-loop)
   - [Key Variables You Might Want to Change](#key-variables-you-might-want-to-change)
@@ -38,14 +36,16 @@
 
 ## Overview
 
-The Drop Logger is an ESP32-S3-based data logger designed to record barometric pressure, acceleration, and gyroscope data at high frequency. It uses two sensors over I2C:
+The Drop Logger is an ESP32-S3-based data logger designed to record barometric pressure, acceleration, and gyroscope data at high frequency (approx every 3 ms). It uses two sensors over I2C:
 
 - **BMP581** — barometric pressure sensor (records pressure difference from a reference taken at startup)
 - **ICM20649** — 6-axis accelerometer and gyroscope (records acceleration magnitude in m/s² and 3-axis rotation in °/s)
 
-The device is designed to be mounted inside a 3D-printed hailstone and dropped from a drone at heights of 100–250 m. The recorded data allows characterisation of tumbling motions and fall dynamics of non-spherical hailstones.
+The device is designed to be mounted inside a 3D-printed hailstone and dropped from a drone at heights of 100+ m. The recorded data allows characterisation of tumbling motions and fall dynamics of non-spherical hailstones.
 
-The device is controlled entirely with the **BOOT button** (GPIO 0) and provides feedback through an **onboard LED** (GPIO 2).
+The device logging is controlled entirely with the **Mode/Boot button** (GPIO 0) and provides feedback through an **onboard blue LED** (GPIO 2).
+
+![hardware](img/hardware.png)
 
 ---
 ## Power
@@ -64,8 +64,8 @@ To charge the battery, connect via usb when the power is switched on. A small re
 |-----------|-------------|
 | I2C SCL | GPIO 6 |
 | I2C SDA | GPIO 5 |
-| LED | GPIO 2 |
-| BOOT button | GPIO 0 |
+| BLUE LED | GPIO 2 |
+| BOOT/MODE button | GPIO 0 |
 | BMP581 address | 0x47 |
 | ICM20649 address | 0x68 |
 
@@ -94,8 +94,7 @@ The BMP581 is a 24-bit absolute barometric pressure sensor from Bosch Sensortec.
  
 **Logger configuration:** The logger uses the fastest possible settings — OSR×1 for both pressure and temperature, with the IIR filter disabled (`COEF_0`). This maximises sample rate at the cost of higher per-sample noise. The noise specifications above are typical values; at OSR×1 with no filtering, individual samples will be noisier than the best-case figures. Higher oversampling (e.g. OSR×128) reduces noise dramatically but slows the output data rate.
  
-**Altitude derivation:** The logger records pressure differences rather than absolute pressure. Altitude is not computed on-device but can be derived from the pressure data using the international barometric formula. Near sea level, 1 hPa corresponds to approximately 8.3 m of altitude change, so the relative accuracy of ±0.06 hPa translates to roughly ±0.5 m in differential altitude measurements.
- 
+  
 ### ICM20649 — Accelerometer and Gyroscope
  
 The ICM20649 is a wide-range 6-axis MEMS inertial measurement unit from TDK InvenSense, designed for high-impact and high-speed rotation applications. It features a 16-bit ADC for each axis.
@@ -115,8 +114,7 @@ The ICM20649 is a wide-range 6-axis MEMS inertial measurement unit from TDK Inve
  
 **Logger configuration:** The accelerometer is set to ±8g and the gyroscope to ±4000 °/s. At the ±8g range, the raw sensitivity is 4096 LSB/g, giving a per-axis resolution of approximately 0.0024 m/s². At the ±4000 °/s gyroscope range, the sensitivity is 8.2 LSB/°/s, giving a resolution of approximately 0.12 °/s per axis. The ±8g accelerometer range is sufficient for freefall (~0g) through to aerodynamic deceleration, while the ±4000 °/s gyro range accommodates the fast tumbling expected during drop experiments.
  
-**Data encoding:** The logger computes the acceleration magnitude (`√(aX² + aY² + aZ²)`) and stores it as a uint16 scaled by 100 (centi-m/s²), giving a recorded resolution of 0.01 m/s² and a maximum recordable value of 655.35 m/s² (~66.8g). Gyroscope values are stored as integers in °/s (int16), so the recorded gyro resolution is 1 °/s — coarser than the raw sensor resolution but sufficient for characterising tumbling at the expected rotation rates.
- 
+
 ### Accelerometer Calibration
  
 The logger applies a simple scale correction to the acceleration magnitude to compensate for sensor bias. The correction factor is computed as:
@@ -125,13 +123,13 @@ The logger applies a simple scale correction to the acceleration magnitude to co
 accel_scale_correction = 9.80665 / a_mag_at_rest
 ```
  
-where `a_mag_at_rest` is the measured acceleration magnitude when the sensor is stationary (currently set to 10.21 m/s² in accel_calibration.txt). The expected value at rest is 1g (9.80665 m/s²), so the correction factor (~0.960) scales all magnitude readings to compensate for the consistent offset. This is a first-order correction that assumes the bias is uniform across all axes and magnitudes. It does not correct for per-axis offset, cross-axis sensitivity, or nonlinearity.
+where `a_mag_at_rest` is the measured acceleration magnitude when the sensor is stationary (currently set to 10.21 m/s² in `config/accel_calibration.txt`). The expected value at rest is 1g (9.80665 m/s²), so the correction factor (~0.960) scales all magnitude readings to compensate for the consistent offset. This is a first-order correction that assumes the bias is uniform across all axes and magnitudes. It does not correct for per-axis offset, cross-axis sensitivity, or nonlinearity.
  
-The value of `a_mag_at_rest` should be recalibrated for each individual sensor unit, as the offset varies from device to device.
+**The value of `a_mag_at_rest` stored in `config/accel_calibration.txt` should be recalibrated for each individual sensor unit, as the offset varies from device to device.**
  
 ### Implications for Drop Experiments
  
-For typical drop experiments from 100–250 m, the key measurement considerations are:
+For typical drop experiments from 100+ m, the key measurement considerations are:
  
 **Pressure/altitude:** The relative accuracy of ±0.04 Pa (~±0.033 m) is more than adequate for tracking altitude changes of 100–250 m. However, the absolute accuracy of ±0.3 hPa (~±2.5 m) means the starting altitude cannot be determined to better than a few metres from pressure alone. The OSR×1 setting with no IIR filter means individual pressure samples will be noisy, but post-processing (e.g. a moving average) can smooth this out without affecting the overall altitude profile.
  
@@ -145,30 +143,19 @@ For typical drop experiments from 100–250 m, the key measurement consideration
 
 On power-up the device enters a waiting state and continuously monitors the accelerometer. There are three ways to proceed:
 
-| Trigger | Action | LED Feedback |
+| Trigger | Action | BLUE LED Feedback |
 |---------|--------|-------------|
-| **Fall detected** | Logging starts automatically | LED on |
-| **Short button press** (<2 s) | Logging starts manually | Single flash, then LED on |
-| **Long button press** (≥2 s) | WiFi file server starts | LED blinks while held, then triple blink |
-
-The serial console prints the available options on startup:
-
-```
-Waiting to start...
-  Short press / fall detected = start data logger
-  Long press (2s)             = start WiFi file server
-```
+| **Fall detected** | Logging starts automatically | Blue LED on |
+| **Short MODE button press** (<2 s) | Logging starts manually | Single flash, then Blue LED on |
+| **Long MODE button press** (≥2 s) | WiFi file server starts | Blue LED blinks while held, then triple blink |
 
 ### Fall Detection
 
-The device continuously reads the accelerometer and computes total acceleration magnitude (`√(aX² + aY² + aZ²)`). If this value drops below **5 m/s²** for **5 consecutive readings**, the device assumes it is in freefall and starts logging automatically. This means you can power on the device before mounting it in the hailstone, and logging will begin on its own when dropped.
+The device continuously reads the accelerometer and computes total acceleration magnitude (`√(aX² + aY² + aZ²)`). If this value drops below **5 m/s²** for **0.25 s**, the device assumes it is in freefall and starts logging automatically. This means you can power on the device before mounting it in the hailstone, and logging will begin on its own when dropped.
 
-### Button Press Detection
+### Reset button
 
-While the BOOT button is held down, the LED blinks to provide feedback. If held for more than 2 seconds the LED switches to a fast blink pattern to indicate the long press has been registered. On release:
-
-- **Short press** — a brief flash confirms the press, and logging begins.
-- **Long press** — a triple blink confirms file server mode, then the WiFi access point starts.
+The reset button will restore the logger to the waiting state (but ideally do not use to terminate logging)
 
 ---
 
@@ -180,18 +167,18 @@ The total storage for data files is 5.8MB, which is approximately 24 minutes of 
 
 ### Starting a Log
 
-Logging starts via any of the three triggers described above. Once running, the **LED stays on** to indicate data is being recorded.
+Logging starts via any of the three triggers described above. Once running, the **Blue LED stays on** to indicate data is being recorded.
 
 ### Stopping a Log
 
-Press the **BOOT button** at any time to stop recording. The button is checked on every sample iteration:
+Press the **MODE button** at any time to stop recording. The button is checked on every sample iteration:
 
-1. **Press the BOOT button** — recording stops immediately.
-2. The **LED turns off** and the serial console prints `Finished`.
+1. **Press the MODE button** — recording stops immediately.
+2. The **Blue LED turns off** and the serial console prints `Finished`.
 3. The data file is flushed and closed.
 
 Logging will also stop automatically if free storage drops below ~50 KB.
-Frees space for storage on the S3 is approximate 5.8 MB.
+Frees space for storage is approximate 5.8 MB.
 
 ### Output Files
 
@@ -233,13 +220,14 @@ This is the easiest method and doesn't require any software on your computer bey
 Make sure the PC/laptop is within 30 cm of the logger to get a good wifi signal (The logger has no wifi antenna...) 
 
 1. **Power on** the device.
-2. **Long-press the BOOT button** (hold for ≥2 seconds). The LED will blink while held and then triple-blink to confirm.
+2. **Long-press the MODE button** (hold for ≥2 seconds). The Blue LED will blink while held and then triple-blink to confirm.
 3. The device creates a **WiFi access point** named after the device (default: `droplogger`). The password is `hailstone`.
+3. Orange LED under the MODE button will be activated.
 4. **Connect your phone or laptop** to this WiFi network.
 5. **Open a browser** and navigate to `http://192.168.4.1`.
 6. You'll see a file listing page where you can **download** or **delete** individual files, or **delete all** files at once.
 
-The device name (and therefore WiFi AP name) is read from `device_name.txt` on the ESP32's filesystem. See [Configuration](#configuration) for details.
+The device name (and therefore WiFi AP name) is read from `config/device_name.txt` on the ESP32's filesystem. See [Configuration](#configuration) for details.
 
 ### Option 2: USB (via serial tools, slow)
 
@@ -255,7 +243,7 @@ Replace the serial port (`/dev/ttyUSB0`, `COM3`, etc.) as appropriate for your s
 
 ## Converting Binary Files to CSV
 
-If you have `.bin` files from the logger (binary format, identified by the `DL01` magic header), you can convert them to CSV on your desktop computer using `unpack_droplogger_binary.py`. This is a standard Python script (not MicroPython) — run it on your PC.
+If you have `.bin` files from the logger (binary format, identified by the `DL01` magic header), you can convert them to CSV on your desktop computer using `unpack_droplogger_binary.py`. This is a standard Python script (not MicroPython) — run it on your PC. It does not require any non-standard Python libraries.
 
 **Basic usage:**
 
@@ -271,12 +259,16 @@ This produces `droplogger_1.csv` alongside the original file.
 python unpack_droplogger_binary.py droplogger_1.bin -o output.csv
 ```
 
+This produces `output.csv`.
+
 **Batch convert a folder:**
 
 ```bash
 python unpack_droplogger_binary.py /path/to/folder/
 python unpack_droplogger_binary.py /path/to/folder/ --replace
 ```
+
+This converts all .bin files in the directory.
 
 ### CSV File Format
  
@@ -316,9 +308,9 @@ time(s),Pressure Difference(hPa),a(ms^-2),gX(deg/s),gY(deg/s),gZ(deg/s)
 
 ### Device Name
 
-The device name is read from a file called `device_name.txt` on the ESP32's filesystem. If the file doesn't exist or is empty, the default name `droplogger` is used. This name is used for both the WiFi access point SSID and the binary file naming.
+The device name is read from a file called `config/device_name.txt` on the ESP32's filesystem. If the file doesn't exist or is empty, the default name `droplogger` is used. This name is used for both the WiFi access point SSID and the binary file naming.
 
-To change the device name, create or edit `device_name.txt` on the ESP32 (e.g. via Thonny or mpremote):
+To change the device name, create or edit `config/device_name.txt` on the ESP32 (e.g. via Thonny or mpremote):
 
 ```
 my-hailstone-1
@@ -329,7 +321,7 @@ my-hailstone-1
 In `main.py`, these variables control the automatic fall trigger:
 
 ```python
-fall_trigger_counter_limit = 5    # consecutive low-g readings required
+fall_trigger_counter_limit = 5    # consecutive low-g readings required (note: 0.05s between readings)
 fall_trigger_a_threshold = 5      # m/s² — readings below this count as freefall
 ```
 
@@ -341,15 +333,6 @@ Lowering the threshold or increasing the counter limit makes fall detection less
 
 This section walks through the main logging script for anyone wanting to modify it.
 
-### Imports and Helpers
-
-```python
-def count_files(path, extension):
-    return sum(1 for f in os.listdir(path) if f.endswith(extension))
-```
-
-This utility counts existing files in `/data/` with a given extension so the next file gets an incremented filename.
-
 ### Sensor Initialisation
 
 The `main()` function sets up both sensors on a shared I2C bus:
@@ -359,7 +342,7 @@ The `main()` function sets up both sensors on a shared I2C bus:
 
 A "burn" read (`_ = bmp.pressure`) discards the first pressure measurement after power-on, which can be unreliable. The second read is saved as the reference pressure.
 
-An accelerometer scale correction factor is applied to compensate for sensor bias: `accel_scale_correction = 9.80665 / a_mag_at_rest` where `a_mag_at_rest` is the measured magnitude when stationary (currently `10.21 m/s²`).
+An accelerometer scale correction factor is applied to compensate for sensor bias: `accel_scale_correction = 9.80665 / a_mag_at_rest` where `a_mag_at_rest` is the measured magnitude when stationary and set in `config/accel_calibration` (default is `10.21 m/s²`).
 
 ### The Logging Loop
 
@@ -371,7 +354,7 @@ The core loop runs as fast as the I2C reads allow (no explicit delay):
 4. **Timestamp** using `utime.ticks_us()` for microsecond resolution (stored as milliseconds).
 5. **Pack and write** a binary row to the open file.
 
-The BOOT button is checked on every iteration and will immediately stop recording if pressed. Every 500 rows the file buffer is flushed to flash storage and available disk space is checked.
+The MODE button is checked on every iteration and will immediately stop recording if pressed. Every 500 rows the file buffer is flushed to flash storage and available disk space is checked.
 
 ---
 
