@@ -32,6 +32,8 @@
   - [The Logging Loop](#the-logging-loop)
   - [Key Variables You Might Want to Change](#key-variables-you-might-want-to-change)
 - [File Structure Summary](#file-structure-summary)
+- [Python tests](#tests)
+- [About](#about)
 ---
 
 ## Overview
@@ -371,6 +373,16 @@ The MODE button is checked on every iteration and will immediately stop recordin
 | `boot.py` | ESP32 | MicroPython boot file (default, mostly empty) |
 | `unpack_droplogger_binary.py` | Desktop PC | Converts binary `.bin` log files to CSV |
 
+## Tests
+
+Unit tests are provided for the three desktop-relevant scripts (`drop_logger.py`, `main.py`, and `unpack_droplogger_binary.py`) in the `tests/` directory. The tests cover binary format correctness, sensor data encoding, file naming, calibration fallback, fall detection logic, and button-press handling. Hardware dependencies (I2C, BMP581, ICM20649, MicroPython-specific modules) are replaced with mocks so the tests run on a standard desktop Python installation. [pytest](https://pytest.org) is required to run them.
+
+```bash
+# From the project root
+python -m pytest tests/ -v
+```
+
+## About
 This project was built with the assistance of Anthropic's Claude.
 For questions or problems, please raise an issue in the github issue tracker.
 
