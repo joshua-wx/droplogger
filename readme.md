@@ -370,3 +370,7 @@ The MODE button is checked on every iteration and will immediately stop recordin
 | `i2c_helpers.py` | ESP32 | Low-level I2C register read/write utilities used by the BMP driver |
 | `boot.py` | ESP32 | MicroPython boot file (default, mostly empty) |
 | `unpack_droplogger_binary.py` | Desktop PC | Converts binary `.bin` log files to CSV |
+
+This project was built with the assistance of Anthropic's Claude.
+For questions or problems, please raise an issue in the github issue tracker.
+
