@@ -1,5 +1,9 @@
 import sys
 import os
 
-# Make scripts importable in all test modules
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'scripts'))
+_root = os.path.join(os.path.dirname(__file__), '..')
+
+# MicroPython firmware (drop_logger, main, etc.)
+sys.path.insert(0, os.path.join(_root, 'scripts'))
+# Desktop tools (unpack_droplogger_binary)
+sys.path.insert(0, _root)

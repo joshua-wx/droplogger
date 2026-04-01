@@ -362,23 +362,33 @@ The MODE button is checked on every iteration and will immediately stop recordin
 
 ## File Structure Summary
 
-| File | Runs on | Role |
-|------|---------|------|
-| `main.py` | ESP32 | Entry point — fall detection, button handling, launches logger or file server |
-| `drop_logger.py` | ESP32 | Core high-speed sensor logging to binary |
-| `file_server.py` | ESP32 | WiFi access point and HTTP file server for downloading/deleting data |
-| `bmpxxx.py` | ESP32 | MicroPython driver for BMP581/585/390/280/BME280 pressure sensors |
-| `icm20649.py` | ESP32 | MicroPython driver for ICM20649 accelerometer/gyroscope |
-| `i2c_helpers.py` | ESP32 | Low-level I2C register read/write utilities used by the BMP driver |
-| `boot.py` | ESP32 | MicroPython boot file (default, mostly empty) |
-| `unpack_droplogger_binary.py` | Desktop PC | Converts binary `.bin` log files to CSV |
+**Firmware** (`scripts/` — deployed to the ESP32):
+
+| File | Role |
+|------|------|
+| `main.py` | Entry point — fall detection, button handling, launches logger or file server |
+| `drop_logger.py` | Core high-speed sensor logging to binary |
+| `file_server.py` | WiFi access point and HTTP file server for downloading/deleting data |
+| `bmpxxx.py` | MicroPython driver for BMP581/585/390/280/BME280 pressure sensors |
+| `icm20649.py` | MicroPython driver for ICM20649 accelerometer/gyroscope |
+| `i2c_helpers.py` | Low-level I2C register read/write utilities used by the BMP driver |
+| `boot.py` | MicroPython boot file (default, mostly empty) |
+
+**Desktop tools** (project root — run on your PC):
+
+| File | Role |
+|------|------|
+| `unpack_droplogger_binary.py` | Converts binary `.bin` log files to CSV |
 
 ## Tests
 
-Unit tests are provided for the three desktop-relevant scripts (`drop_logger.py`, `main.py`, and `unpack_droplogger_binary.py`) in the `tests/` directory. The tests cover binary format correctness, sensor data encoding, file naming, calibration fallback, fall detection logic, and button-press handling. Hardware dependencies (I2C, BMP581, ICM20649, MicroPython-specific modules) are replaced with mocks so the tests run on a standard desktop Python installation. [pytest](https://pytest.org) is required to run them.
+Unit tests are provided for the three desktop-relevant scripts (`drop_logger.py`, `main.py`, and `unpack_droplogger_binary.py`) in the `tests/` directory. The tests cover binary format correctness, sensor data encoding, file naming, calibration fallback, fall detection logic, and button-press handling. Hardware dependencies (I2C, BMP581, ICM20649, MicroPython-specific modules) are replaced with mocks so the tests run on a standard desktop Python installation.
 
 ```bash
-# From the project root
+# Install dependencies
+pip install -r requirements-dev.txt
+
+# Run tests from the project root
 python -m pytest tests/ -v
 ```
 

@@ -15,3 +15,7 @@ __pycache__/
 # OS
 .DS_Store
 Thumbs.db
+
+# Device-specific config (copy the .example files and fill in per-device values)
+scripts/config/device_name.txt
+scripts/config/accel_calibration.txt
