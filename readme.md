@@ -1,5 +1,7 @@
 # Drop Logger — User Guide
 
+![Tests](https://github.com/joshua-wx/droplogger/actions/workflows/tests.yml/badge.svg)
+
 ![logo](img/droplogger_logo.png)
 
 ## Table of Contents
