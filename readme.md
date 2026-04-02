@@ -250,7 +250,7 @@ If you have `.bin` files from the logger (binary format, identified by the `DL01
 **Basic usage:**
 
 ```bash
-python unpack_droplogger_binary.py droplogger_1.bin
+python desktop-tools/unpack_droplogger_binary.py droplogger_1.bin
 ```
 
 This produces `droplogger_1.csv` alongside the original file.
@@ -258,7 +258,7 @@ This produces `droplogger_1.csv` alongside the original file.
 **Specify output path:**
 
 ```bash
-python unpack_droplogger_binary.py droplogger_1.bin -o output.csv
+python desktop-tools/unpack_droplogger_binary.py droplogger_1.bin -o output.csv
 ```
 
 This produces `output.csv`.
@@ -266,8 +266,8 @@ This produces `output.csv`.
 **Batch convert a folder:**
 
 ```bash
-python unpack_droplogger_binary.py /path/to/folder/
-python unpack_droplogger_binary.py /path/to/folder/ --replace
+python desktop-tools/unpack_droplogger_binary.py /path/to/folder/
+python desktop-tools/unpack_droplogger_binary.py /path/to/folder/ --replace
 ```
 
 This converts all .bin files in the directory.
@@ -362,7 +362,7 @@ The MODE button is checked on every iteration and will immediately stop recordin
 
 ## File Structure Summary
 
-**Firmware** (`scripts/` — deployed to the ESP32):
+**Firmware** (`logger-scripts/` — deployed to the ESP32):
 
 | File | Role |
 |------|------|
@@ -374,7 +374,7 @@ The MODE button is checked on every iteration and will immediately stop recordin
 | `i2c_helpers.py` | Low-level I2C register read/write utilities used by the BMP driver |
 | `boot.py` | MicroPython boot file (default, mostly empty) |
 
-**Desktop tools** (project root — run on your PC):
+**Desktop tools** (`desktop-tools/` — run on your PC):
 
 | File | Role |
 |------|------|

@@ -17,5 +17,5 @@ __pycache__/
 Thumbs.db
 
 # Device-specific config (copy the .example files and fill in per-device values)
-scripts/config/device_name.txt
-scripts/config/accel_calibration.txt
+logger-scripts/config/device_name.txt
+logger-scripts/config/accel_calibration.txt
