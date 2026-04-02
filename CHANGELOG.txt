@@ -2,5 +2,25 @@ Droplogger
 CHANGELOG.txt
 --------------------------
 
+2 April 2026 — v1.1.0
+* Added unit tests for drop_logger.py, main.py and unpack_droplogger_binary.py
+* Added .gitignore
+* Added requirements-dev.txt (pytest)
+* Renamed scripts/ to logger-scripts/ and moved unpack_droplogger_binary.py to desktop-tools/
+* Added .example files for device-specific config (device_name.txt, accel_calibration.txt)
+* Added data evaluation Jupyter notebook (desktop-tools/evaluate_droplogger.ipynb) with:
+  - Timing statistics and write-pause detection
+  - Per-channel statistics (min/max/mean/std)
+  - Time-series plots (pressure, acceleration, rotation)
+  - Instantaneous sample rate plot
+  - Sensor saturation check
+  - Terminal velocity detection
+  - Tumble frequency PSD
+  - Pressure noise floor measurement
+  - Write-pause stale-value check
+* Added sample drop test dataset (desktop-tools/sample-data/)
+* Added desktop-tools/requirements.txt (pandas, matplotlib, numpy, scipy, jupyter)
+* Updated README with tests section and revised file structure
+
 17 March 2026
-* added config file for device name
+* Added config file for device name
