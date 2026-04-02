@@ -32,6 +32,7 @@
   - [The Logging Loop](#the-logging-loop)
   - [Key Variables You Might Want to Change](#key-variables-you-might-want-to-change)
 - [File Structure Summary](#file-structure-summary)
+- [Evaluating Data](#evaluating-data)
 - [Python tests](#tests)
 - [About](#about)
 ---
@@ -379,6 +380,46 @@ The MODE button is checked on every iteration and will immediately stop recordin
 | File | Role |
 |------|------|
 | `unpack_droplogger_binary.py` | Converts binary `.bin` log files to CSV |
+| `evaluate_droplogger.ipynb` | Jupyter notebook for evaluating downloaded CSV data |
+| `sample-data/` | Sample drop test dataset for use with the notebook |
+| `requirements.txt` | Python dependencies for desktop tools |
+
+**3D models** (`models/` — printable enclosure parts):
+
+| File | Role |
+|------|------|
+| `droplogger_body.stl` | Main enclosure body |
+| `droplogger_top.stl` | Enclosure lid |
+| `droplogger_pin.stl` | Retention pin |
+| `droplogger_model.step` | STEP file for CAD editing |
+| `models_readme.md` | Assembly and printing notes |
+
+---
+
+## Evaluating Data
+
+Once you have a CSV file (converted from binary using `unpack_droplogger_binary.py`), the Jupyter notebook `desktop-tools/evaluate_droplogger.ipynb` provides a ready-made workflow for inspecting a drop test. It covers:
+
+- **Timing** — median / maximum sample interval and write-pause detection
+- **Channel statistics** — min, max, mean, std for pressure, acceleration and all gyro axes
+- **Time-series plots** — pressure, acceleration and rotation on a shared time axis
+- **Instantaneous sample rate** — visualises write-flush pauses
+- **Sensor saturation check** — flags gyro samples near the ±4000 °/s hardware limit
+- **Terminal velocity** — detects the pressure plateau during freefall
+- **Tumble frequency (PSD)** — Welch power spectral density of gyro channels during freefall
+- **Pressure noise floor** — sensor noise measured during the post-landing stationary phase
+- **Write-pause impact** — checks for stale sensor values around write-flush pauses
+
+A sample dataset is included in `desktop-tools/sample-data/` so you can run the notebook straight away.
+
+```bash
+# Install dependencies
+pip install -r desktop-tools/requirements.txt
+
+# Launch Jupyter from the desktop-tools directory
+cd desktop-tools
+jupyter notebook evaluate_droplogger.ipynb
+```
 
 ## Tests
 
