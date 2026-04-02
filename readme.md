@@ -372,6 +372,7 @@ The MODE button is checked on every iteration and will immediately stop recordin
 | `main.py` | Entry point — fall detection, button handling, launches logger or file server |
 | `drop_logger.py` | Core high-speed sensor logging to binary |
 | `file_server.py` | WiFi access point and HTTP file server for downloading/deleting data |
+| `test_board.py` | Simple sensor test script — reads and prints pressure, accel, and gyro at 10 Hz for board verification |
 | `bmpxxx.py` | MicroPython driver for BMP581/585/390/280/BME280 pressure sensors |
 | `icm20649.py` | MicroPython driver for ICM20649 accelerometer/gyroscope |
 | `i2c_helpers.py` | Low-level I2C register read/write utilities used by the BMP driver |
@@ -422,6 +423,39 @@ pip install -r desktop-tools/requirements.txt
 cd desktop-tools
 jupyter notebook evaluate_droplogger.ipynb
 ```
+
+## Testing New Boards
+
+When assembling or commissioning a new logger board, use `test_board.py` to verify that both sensors are functioning correctly. This script runs a simple loop that reads pressure, accelerometer, and gyroscope data and prints them to the console at 10 Hz (every 0.1 seconds).
+
+**To run the test:**
+
+1. Copy `test_board.py` to the ESP32 (e.g. via Thonny, mpremote, or the file server).
+2. Open a serial monitor or terminal connected to the board (115200 baud).
+3. Run the script: In Thonny, right-click and choose "Run", or execute `import test_board` in the REPL.
+4. You should see continuous output like:
+   ```
+   Initializing ICM20649...
+   ✓ ICM20649 initialized
+   Initializing BMP581...
+   ✓ BMP581 initialized
+   
+   Starting sensor readings (0.1s interval, Ctrl+C to stop)...
+   
+   Pressure: 1008.34 hPa  |  Accel: (   0.12,   -0.05,   10.21) m/s²  |  Gyro: (  -0.2,    0.1,    0.3) deg/s
+   Pressure: 1008.34 hPa  |  Accel: (   0.08,    0.02,   10.19) m/s²  |  Gyro: (   0.1,   -0.2,    0.0) deg/s
+   ```
+5. Check that:
+   - Both sensors initialize successfully (no error messages)
+   - Pressure readings are within 300–1250 hPa (typical sea-level value ~1010 hPa)
+   - Accelerometer reads close to 10 m/s² on the Z-axis when stationary (Earth's gravity = 9.81 m/s²)
+   - Gyroscope reads near zero when stationary
+   - All values update continuously without freezing or errors
+6. Press **Ctrl+C** in the terminal to stop the test.
+
+If either sensor fails to initialize, check I2C connections and sensor addresses (BMP581 at 0x47, ICM20649 at 0x68).
+
+---
 
 ## Tests
 
