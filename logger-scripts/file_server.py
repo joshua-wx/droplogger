@@ -245,7 +245,7 @@ def create_ap(ssid, password):
 
 def serve(ip, port=80):
     """Start HTTP server"""
-    led = Pin(2, Pin.OUT)
+    led = Pin(6, Pin.OUT)
     
     addr = socket.getaddrinfo(ip, port)[0][-1]
     s = socket.socket()
