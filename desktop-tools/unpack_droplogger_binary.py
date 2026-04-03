@@ -62,8 +62,9 @@ def unpack_file(bin_path, csv_path=None):
         out.write("time(s),Pressure Difference(hPa),a(ms^-2),"
                   "gX(deg/s),gY(deg/s),gZ(deg/s)\n")
         # Write reference pressure on first line (matching original CSV convention)
-        out.write(f"-0.001,{ref_pressure:.3f},,,,,,\n")
- 
+        # Keep exactly 6 columns to align with the header.
+        out.write(f"-0.001,{ref_pressure:.3f},,,,\n")
+
         for i in range(n_rows):
             offset = HEADER_SIZE + i * ROW_SIZE
             time_ms, p_diff, a_mag, gx, gy, gz = struct.unpack_from(ROW_FORMAT, data, offset)

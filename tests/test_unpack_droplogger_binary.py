@@ -61,6 +61,18 @@ class TestUnpackFile:
         # First data row: 1000 ms -> 1.000 s, 500 mhPa -> 0.500 hPa, 981 -> 9.81 m/s²
         assert lines[2] == "1.000,0.500,9.81,10,-5,3"
 
+    def test_reference_row_has_expected_field_count(self, tmp_path):
+        ref_pressure = 1013.25
+        bin_file = tmp_path / "test.bin"
+        bin_file.write_bytes(make_binary(ref_pressure, [(1000, 0, 981, 0, 0, 0)]))
+        csv_file = tmp_path / "out.csv"
+
+        udb.unpack_file(str(bin_file), str(csv_file))
+
+        second_line = csv_file.read_text().splitlines()[1]
+        assert second_line == "-0.001,1013.250,,,,"
+        assert len(second_line.split(',')) == 6
+
     def test_multiple_rows_all_written(self, tmp_path):
         rows = [
             (0,    0,    981,  0,  0,  0),
