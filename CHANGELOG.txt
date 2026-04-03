@@ -2,6 +2,11 @@ Droplogger
 CHANGELOG.txt
 --------------------------
 
+3 April 2026 — v1.2.0
+* Added accel_calibration.py script for automated accelerometer calibration (1000-sample mean)
+* Added test_board.py script for sensor verification during board commissioning
+* Updated README with 'Testing New Boards' section and usage guide
+
 3 April 2026 — v1.1.1
 * Added test_board.py script for sensor verification during board commissioning
 * Updated README with 'Testing New Boards' section and usage guide
