@@ -373,6 +373,7 @@ The MODE button is checked on every iteration and will immediately stop recordin
 | `drop_logger.py` | Core high-speed sensor logging to binary |
 | `file_server.py` | WiFi access point and HTTP file server for downloading/deleting data |
 | `test_board.py` | Simple sensor test script — reads and prints pressure, accel, and gyro at 10 Hz for board verification |
+| `accel_calibration.py` | Compute and store accelerometer rest magnitude (1000-sample mean) in `config/accel_calibration.txt` |
 | `bmpxxx.py` | MicroPython driver for BMP581/585/390/280/BME280 pressure sensors |
 | `icm20649.py` | MicroPython driver for ICM20649 accelerometer/gyroscope |
 | `i2c_helpers.py` | Low-level I2C register read/write utilities used by the BMP driver |
@@ -427,6 +428,8 @@ jupyter notebook evaluate_droplogger.ipynb
 ## Testing New Boards
 
 When assembling or commissioning a new logger board, use `test_board.py` to verify that both sensors are functioning correctly. This script runs a simple loop that reads pressure, accelerometer, and gyroscope data and prints them to the console at 10 Hz (every 0.1 seconds).
+
+For accelerometer bias calibration, use `accel_calibration.py` which captures 1000 samples at rest and writes the mean magnitude to `config/accel_calibration.txt`.
 
 **To run the test:**
 
