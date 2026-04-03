@@ -6,6 +6,7 @@ Tests: pressure sensor (BMP581) and IMU (ICM20649 gyro + accel)
 import time
 from machine import Pin, I2C
 import icm20649
+from math import sqrt
 from bmpxxx import BMP581
 
 # Initialize I2C
@@ -36,14 +37,16 @@ try:
         
         # Read accelerometer
         ax, ay, az = icm.acceleration
+        a_total = sqrt(ax * ax + ay * ay + az * az)
         
         # Read gyro
         gx, gy, gz = icm.gyro
         
         # Print readings
         print(f"Pressure: {pressure:.2f} hPa  |  "
-              f"Accel: ({ax:7.2f}, {ay:7.2f}, {az:7.2f}) m/s²  |  "
-              f"Gyro: ({gx:7.1f}, {gy:7.1f}, {gz:7.1f}) deg/s")
+              f"Accel: ({ax:7.2f}, {ay:7.2f}, {az:7.2f} m/s²  |  "
+              f"Gyro: ({gx:7.1f}, {gy:7.1f}, {gz:7.1f}) deg/s |  "
+              f"Accel mag value: ({a_total:7.2f}) m/s²")
         
         time.sleep(0.1)
 
