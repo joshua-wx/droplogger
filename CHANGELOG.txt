@@ -2,6 +2,10 @@ Droplogger
 CHANGELOG.txt
 --------------------------
 
+7 April 2026 — v1.2.1
+* Fixed unpacker script and updated test data
+* Corrected user LED pin in file_server.py
+
 3 April 2026 — v1.2.0
 * Added accel_calibration.py script for automated accelerometer calibration (1000-sample mean)
 * Added test_board.py script for sensor verification during board commissioning
