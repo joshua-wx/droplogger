@@ -6,17 +6,26 @@ Tests: pressure sensor (BMP581) and IMU (ICM20649 gyro + accel)
 import time
 from machine import Pin, I2C
 import icm20649
+import ism330dhcx
 from math import sqrt
 from bmpxxx import BMP581
 
 # Initialize I2C
 i2c = I2C(scl=Pin(6), sda=Pin(5))
 
-# Initialize Accelerometer/Gyro (ICM20649)
-print("Initializing ICM20649...")
-icm = icm20649.ICM20649(i2c, address=0x68)
-icm.gyro_range = icm20649.GyroRange.RANGE_4000_DPS
-print("✓ ICM20649 initialized")
+# # Initialize Accelerometer/Gyro (ICM20649)
+# print("Initializing ICM20649...")
+# icm = icm20649.ICM20649(i2c, address=0x68)
+# icm.gyro_range = icm20649.GyroRange.RANGE_4000_DPS
+# print("✓ ICM20649 initialized")
+
+# Initialize Accelerometer/Gyro (ISM330DHCX)
+print("Initializing ISM330DHCX...")
+icm = ism330dhcx.ISM330DHCX(i2c, address=0x6B)
+imu.accelerometer_range     = ism330dhcx.AccelRange.RANGE_8G
+imu.gyro_range              = ism330dhcx.GyroRange.RANGE_1000_DPS
+imu.accelerometer_data_rate = ism330dhcx.Rate.RATE_208_HZ
+imu.gyro_data_rate          = ism330dhcx.Rate.RATE_208_HZ
 
 # Initialize Pressure Sensor (BMP581)
 print("Initializing BMP581...")
