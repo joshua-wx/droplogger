@@ -21,11 +21,11 @@ i2c = I2C(scl=Pin(6), sda=Pin(5))
 
 # Initialize Accelerometer/Gyro (ISM330DHCX)
 print("Initializing ISM330DHCX...")
-icm = ism330dhcx.ISM330DHCX(i2c, address=0x6B)
-imu.accelerometer_range     = ism330dhcx.AccelRange.RANGE_8G
-imu.gyro_range              = ism330dhcx.GyroRange.RANGE_1000_DPS
-imu.accelerometer_data_rate = ism330dhcx.Rate.RATE_208_HZ
-imu.gyro_data_rate          = ism330dhcx.Rate.RATE_208_HZ
+icm = ism330dhcx.ISM330DHCX(i2c, address=0x6A)
+icm.accelerometer_range     = ism330dhcx.AccelRange.RANGE_8G
+icm.gyro_range              = ism330dhcx.GyroRange.RANGE_1000_DPS
+icm.accelerometer_data_rate = ism330dhcx.Rate.RATE_208_HZ
+icm.gyro_data_rate          = ism330dhcx.Rate.RATE_208_HZ
 
 # Initialize Pressure Sensor (BMP581)
 print("Initializing BMP581...")
