@@ -1,8 +1,20 @@
 import time
 from machine import Pin, I2C
 from math import sqrt
-import icm20649
 import drop_logger
+
+try:
+    with open('config/imu_type.txt', 'r') as f:
+        IMU_TYPE = f.read().strip()
+    if IMU_TYPE not in ('ICM20649', 'ISM330DHCX'):
+        IMU_TYPE = 'ICM20649'
+except OSError:
+    IMU_TYPE = 'ICM20649'
+
+if IMU_TYPE == 'ICM20649':
+    import icm20649
+elif IMU_TYPE == 'ISM330DHCX':
+    import ism330dhcx
 
 # Set the device name here! Used for wifi AP name and binary file naming.
 try:
@@ -22,10 +34,17 @@ led.value(0)
 # The BOOT button is connected to GPIO 0 on the ESP32-C3
 boot_pin = Pin(0, Pin.IN, Pin.PULL_UP)
 
-# Accelerometer (ICM20649)
+# Accelerometer/Gyro
 i2c = I2C(scl=Pin(6), sda=Pin(5))
-icm = icm20649.ICM20649(i2c, address=0x68)
-icm.gyro_range = icm20649.GyroRange.RANGE_4000_DPS
+if IMU_TYPE == 'ICM20649':
+    icm = icm20649.ICM20649(i2c, address=0x68)
+    icm.gyro_range = icm20649.GyroRange.RANGE_4000_DPS
+elif IMU_TYPE == 'ISM330DHCX':
+    icm = ism330dhcx.ISM330DHCX(i2c, address=0x6A)
+    icm.accelerometer_range     = ism330dhcx.AccelRange.RANGE_8G
+    icm.gyro_range              = ism330dhcx.GyroRange.RANGE_4000_DPS
+    icm.accelerometer_data_rate = ism330dhcx.Rate.RATE_208_HZ
+    icm.gyro_data_rate          = ism330dhcx.Rate.RATE_208_HZ
 
 # Fall detection settings
 fall_trigger_counter = 0
