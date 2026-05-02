@@ -12,6 +12,7 @@
 - [Sensor Specifications and Calibration](#sensor-specifications-and-calibration)
   - [BMP581 — Barometric Pressure](#bmp581--barometric-pressure)
   - [ICM20649 — Accelerometer and Gyroscope](#icm20649--accelerometer-and-gyroscope)
+  - [ISM330DHCX — Accelerometer and Gyroscope](#ism330dhcx--accelerometer-and-gyroscope)
   - [Accelerometer Calibration](#accelerometer-calibration)
   - [Implications for Drop Experiments](#implications-for-drop-experiments)
 - [Device Modes](#device-modes)
@@ -28,6 +29,7 @@
   - [CSV File Format](#csv-file-format)
 - [Configuration](#configuration)
   - [Device Name](#device-name)
+  - [IMU Selection](#imu-selection)
   - [Fall Detection Sensitivity](#fall-detection-sensitivity)
 - [Code Overview — `drop_logger.py`](#code-overview--drop_loggerpy)
   - [Sensor Initialisation](#sensor-initialisation)
@@ -44,7 +46,7 @@
 The Drop Logger is an ESP32-S3-based data logger designed to record barometric pressure, acceleration, and gyroscope data at high frequency (approx every 3 ms). It uses two sensors over I2C:
 
 - **BMP581** — barometric pressure sensor (records pressure difference from a reference taken at startup)
-- **ICM20649** — 6-axis accelerometer and gyroscope (records acceleration magnitude in m/s² and 3-axis rotation in °/s)
+- **ICM20649** or **ISM330DHCX** — 6-axis accelerometer and gyroscope (records acceleration magnitude in m/s² and 3-axis rotation in °/s). The active IMU is selected via a config file — see [IMU Selection](#imu-selection).
 
 The device is designed to be mounted inside a 3D-printed hailstone and dropped from a drone at heights of 100+ m. The recorded data allows characterisation of tumbling motions and fall dynamics of non-spherical hailstones.
 
@@ -73,6 +75,7 @@ To charge the battery, connect via usb when the power is switched on. A small re
 | BOOT/MODE button | GPIO 0 |
 | BMP581 address | 0x47 |
 | ICM20649 address | 0x68 |
+| ISM330DHCX address | 0x6A |
 
 ---
 
@@ -118,7 +121,27 @@ The ICM20649 is a wide-range 6-axis MEMS inertial measurement unit from TDK Inve
 | Operating temperature range | −40 to +85 °C |
  
 **Logger configuration:** The accelerometer is set to ±8g and the gyroscope to ±4000 °/s. At the ±8g range, the raw sensitivity is 4096 LSB/g, giving a per-axis resolution of approximately 0.0024 m/s². At the ±4000 °/s gyroscope range, the sensitivity is 8.2 LSB/°/s, giving a resolution of approximately 0.12 °/s per axis. The ±8g accelerometer range is sufficient for freefall (~0g) through to aerodynamic deceleration, while the ±4000 °/s gyro range accommodates the fast tumbling expected during drop experiments.
- 
+
+
+### ISM330DHCX — Accelerometer and Gyroscope
+
+The ISM330DHCX is a 6-axis MEMS IMU from STMicroelectronics. It is pin- and interface-compatible with the ICM20649 driver used in this project — the same `.acceleration` and `.gyro` properties are exposed, so no changes to the logging loop are required when switching between the two sensors.
+
+**Datasheet specifications:**
+
+| Parameter | Value |
+|-----------|-------|
+| Accelerometer full-scale ranges | ±2g, ±4g, ±8g, ±16g |
+| Accelerometer sensitivity error | ±1.5% |
+| Accelerometer noise density | 70 µg/√Hz |
+| Gyroscope full-scale ranges | ±125, ±250, ±500, ±1000, ±2000, ±4000 °/s |
+| Gyroscope sensitivity error | ±1.5% |
+| Gyroscope noise density | 0.007 °/s/√Hz |
+| ADC resolution | 16-bit per axis |
+| Operating temperature range | −40 to +105 °C |
+
+**Logger configuration:** The accelerometer is set to ±8g and the gyroscope to ±4000 °/s at 208 Hz output data rate, matching the ICM20649 logging configuration. The `test_board.py` script uses ±1000 °/s for bench verification where fast rotation is unlikely.
+
 
 ### Accelerometer Calibration
  
@@ -321,6 +344,24 @@ To change the device name, create or edit `config/device_name.txt` on the ESP32 
 my-hailstone-1
 ```
 
+### IMU Selection
+
+The IMU type is read from `config/imu_type.txt` on the ESP32's filesystem. If the file is missing or contains an unrecognised value, the device defaults to `ICM20649`.
+
+To select the ISM330DHCX, create `config/imu_type.txt` containing:
+
+```
+ISM330DHCX
+```
+
+To revert to the ICM20649, set the file contents to:
+
+```
+ICM20649
+```
+
+An example file is provided at `config/imu_type.txt.example`. The same setting is read by `main.py`, `drop_logger.py`, and `test_board.py`, so only one file needs to be updated.
+
 ### Fall Detection Sensitivity
 
 In `main.py`, these variables control the automatic fall trigger:
@@ -342,7 +383,7 @@ This section walks through the main logging script for anyone wanting to modify 
 
 The `main()` function sets up both sensors on a shared I2C bus:
 
-- **ICM20649** is configured with a gyro range of ±4,000 °/s (`RANGE_4000_DPS`) to capture fast rotations without clipping.
+- **ICM20649 or ISM330DHCX** — selected via `config/imu_type.txt` (see [IMU Selection](#imu-selection)). Both are configured with a gyro range of ±4,000 °/s to capture fast rotations without clipping. The ISM330DHCX additionally has its output data rate set to 208 Hz.
 - **BMP581** is configured for speed over precision: 1× oversampling on both pressure and temperature, no IIR filtering (`COEF_0`). This gives the fastest possible sample rate at the cost of some noise.
 
 A "burn" read (`_ = bmp.pressure`) discards the first pressure measurement after power-on, which can be unreliable. The second read is saved as the reference pressure.
@@ -376,6 +417,7 @@ The MODE button is checked on every iteration and will immediately stop recordin
 | `accel_calibration.py` | Compute and store accelerometer rest magnitude (1000-sample mean) in `config/accel_calibration.txt` |
 | `bmpxxx.py` | MicroPython driver for BMP581/585/390/280/BME280 pressure sensors |
 | `icm20649.py` | MicroPython driver for ICM20649 accelerometer/gyroscope |
+| `ism330dhcx.py` | MicroPython driver for ISM330DHCX accelerometer/gyroscope |
 | `i2c_helpers.py` | Low-level I2C register read/write utilities used by the BMP driver |
 | `boot.py` | MicroPython boot file (default, mostly empty) |
 
@@ -456,7 +498,9 @@ For accelerometer bias calibration, use `accel_calibration.py` which captures 10
    - All values update continuously without freezing or errors
 6. Press **Ctrl+C** in the terminal to stop the test.
 
-If either sensor fails to initialize, check I2C connections and sensor addresses (BMP581 at 0x47, ICM20649 at 0x68).
+The IMU name printed during initialisation reflects whichever sensor is selected in `config/imu_type.txt` (defaults to ICM20649 if the file is absent).
+
+If either sensor fails to initialize, check I2C connections and sensor addresses (BMP581 at 0x47, ICM20649 at 0x68, ISM330DHCX at 0x6A).
 
 ---
 
